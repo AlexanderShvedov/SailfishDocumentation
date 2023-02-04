@@ -39,3 +39,48 @@ slither_obj = Slither(contract_path, solc=solc_path)
 (Замечание: есть ещё проверки на interanl и external call для функций, которые так же влияют на граф, но в моём примере эти проверки не прошли)
 
 <img src="./graphsPictures/callgraph.png" width="100%">
+
+## generate_icfg
+
+Для начала генерируется граф cfg для каждой функции. На этом этапе функция разбивается на блоки с интсрукциями. 
+
+<img src="./graphsPictures/withdrawBalance_cfg.png" width="100%">
+
+Далее cfg используется для icfg. В данном примере разницы между ними нет.
+
+<img src="./graphsPictures/withdrawBalance_icfg.png" width="100%">
+
+Однако, если внурти одной функции есть вызов другой функции контракта (неважно, публичной или приватной), этот вызов разоюбъётся на отдельные блоки. Это можно видеть в данном примере:
+
+
+pragma solidity ^0.4.21;
+contract Foo {
+    mapping (address => uint256) public balance;
+    mapping (address => uint256) public randomValues;
+
+    
+    function functionWithPublicFunction(uint256 value) public payable {
+       balance[msg.sender] += msg.value;
+       publicFunction(value, msg.sender);
+    }
+
+    function functionWithPrivateFunction(uint256 value) public payable {
+       balance[msg.sender] += msg.value;
+       privateFunction(value, msg.sender);
+    }
+
+    function publicFunction(uint256 value, address to) public {
+        privateFunction(value, msg.sender);
+        randomValues[to] *= value;
+    }
+
+    function privateFunction(uint256 value, address to) private {
+        randomValues[to] += value;
+    }
+}
+
+
+Будут сгенерированы такие cfg и icfg:
+
+<img src="./graphsPictures/functionWithPublicFunction_cfg.png" width="100%">
+<img src="./graphsPictures/functionWithPublicFunction_icfg.png" width="100%">
