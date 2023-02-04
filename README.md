@@ -38,4 +38,4 @@ slither_obj = Slither(contract_path, solc=solc_path)
 
 (Замечание: есть ещё проверки на interanl и external call для функций, которые так же влияют на граф, но в моём примере эти проверки не прошли)
 
-<img src="./graphsPictures/callgrapth.png" width="100%">
+<img src="./graphsPictures/callgraph.png" width="100%">
