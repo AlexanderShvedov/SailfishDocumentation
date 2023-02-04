@@ -140,3 +140,61 @@ successor._pred_state_var_used.update(basic_block._state_vars_used)
 К графу sicfg прикрепляются глобальные переменные, строятся рёбра к ним. Эти зависимости берутся из range графа. Результат работы:
 
 <img src="./graphsPictures/withdrawBalance_sdg.png" width="100%">
+
+
+## Composed
+
+В этом блоке пытаются склеить по 2 функции.
+
+
+1. Идёт отбрасывание приватных функций и конструкторов.
+
+2. Если в функции имеется external_call, то делаются analyze_call_destination и analyze_lowlevelcall_gas для этой функции.
+
+(Замечание: в этих функциях используется slither)
+
+3. Если функция отпавляет ether или имеет external_call, то для неё создаётся стуктура Compose, которая запоминается в composed_sdg[function].
+
+### Что происходит в Compose
+
+Вызывается метод build_composed_sdg, в котором
+
+a. Среди всех matching_sdg выделяют общие переменные.
+
+b. Получаем вершины инструкций для target sdg, который анализируется на предмет уязвимости
+
+c. При наличии external_call, вызывается self.get_dao_composed_sdg. Результат запоминается в self._dao_composed_sdgs и 
+
+self._dao_composed_sdg_to_call_predecessors
+
+### Что происходит в get_dao_composed_sdg
+
+Создаётся словарь словарей composed_sdgs. Первым ключём является вункция, для которой мы создавали Compose (self._sdg_obj._function), второй ключ -- сопоставляемая ей функция (matching_sdg_obj._function). Значением же является список tuple из 4 элементов -- (composed_sdg, graph_node, modified_sdg, matching_sdg)
+
+Перебираются вершины из target_sdg. Анализ начнётся только если тип инструкции в этой вершине имеет значение LowLevelCall или HighLevelCall!
+
+Если все проверки прошли, то находятся все вершины, которые появляются после external_call. Точно так же и те, что были до него, включая вершину с external_call.
+
+Если функции matching_sdg_obj._function и self._sdg_obj._function совпадают, то надо сделать копию графа.
+
+Далее composed_sdg = nx.compose(modified_sdg, matching_sdg) -- для inlining matching sdg.
+
+self.remove_edges(composed_sdg, [graph_node], successors)
+
+self.add_src_to_dest_edges(composed_sdg, [graph_node], root_nodes, function_start)
+
+self.add_src_to_dest_edges(composed_sdg, leaf_nodes, successors, function_end)
+
+(Ещё немного обработки рёбер)
+
+Пополнение composed_sdgs полученным tuple (composed_sdg, graph_node, modified_sdg, matching_sdg).
+
+После обработки сопоставляемых функций, если установлен флаг _dump_graph, нарисуются соответствующие графы.
+
+## Нахождение уязвимостей в блоке detection
+
+TODO
+
+## Словарик с обозначениями
+
+SDG -- storage dependency graph
