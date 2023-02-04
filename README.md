@@ -84,3 +84,27 @@ contract Foo {
 
 <img src="./graphsPictures/functionWithPublicFunction_cfg.png" width="100%">
 <img src="./graphsPictures/functionWithPublicFunction_icfg.png" width="100%">
+
+## range_graph
+Для каждой функии находятся зависимости глобальных переменных. На данном примере условие является вызовом некоторой функции и обозначается как U.
+
+<img src="./graphsPictures/withdrawBalance_range_2.png" width="100%">
+
+При рассмотрении функции ниже есть 3 условия выполнения блока if и в нём есть 3 изменения глобальных переменных. Для каждого из этого изменения сгенерируется свой range граф:
+
+function withdrawAllBalance() public {
+    uint creditBalance = creditAmount[msg.sender];
+    
+    if (creditBalance > 0 && !creditReward[msg.sender] && flag[msg.sender])
+    {
+      flag[msg.sender] = false;
+      creditReward[msg.sender] = true;
+      msg.sender.call.value(creditBalance)("");
+      creditAmount[msg.sender] = 0;
+    }
+  }
+
+
+<img src="./graphsPictures/withdrawAllBalance_range_3.png" width="100%">
+<img src="./graphsPictures/withdrawAllBalance_range_4.png" width="100%">
+<img src="./graphsPictures/withdrawAllBalance_range_5.png" width="100%">
