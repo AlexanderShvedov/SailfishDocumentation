@@ -108,3 +108,35 @@ function withdrawAllBalance() public {
 <img src="./graphsPictures/withdrawAllBalance_range_3.png" width="100%">
 <img src="./graphsPictures/withdrawAllBalance_range_4.png" width="100%">
 <img src="./graphsPictures/withdrawAllBalance_range_5.png" width="100%">
+
+## generate_sdg
+
+Для каждой функции создаётся свой sdg
+
+(Замечание: есть ещё некоторые modifiers, но пока они не использовались в примере.)
+
+Для начала функцией build_simplified_icfg(self) генерируется simplified icfg, содержащий базовые блоки, способные менять состояние контракта (в комментариях написано, что учитываются 1, 4, 6).
+
+В начале этой функиции вызывается self.propagate_state_vars_used(), использующий bfs. В этом bfs делаются вызовы
+
+successor._pred_state_var_used.update(basic_block._pred_state_var_used)
+
+successor._pred_state_var_used.update(basic_block._state_vars_used)
+
+Далее для каждого блока icfg упрощаюстя базовые блоки, которые не нужны для протеворечивого состояния.
+
+Если блок пустой и у него есть 2 предка, то этот блок становиться отдельной phi вершиной.
+
+Добавляются рёбра между блоками, если список инструкций не пуст. Так же, если оказывается вершина без предков и потомков, надо убедиться, что вершина добавлена в граф. (конец build\_simplified\_icfg)
+
+Пример сгенерированного sicfg:
+
+<img src="./graphsPictures/withdrawBalance_sicfg.png" width="100%">
+
+Далее функция self.build_sdg(self._contract, self._function, self._sicfg), результат сохраняется в SDG.sdg_generated[self._function]. Эта функция добавляет dataflow edges к IR интсрукциям.
+
+Ход функции:
+
+К графу sicfg прикрепляются глобальные переменные, строятся рёбра к ним. Эти зависимости берутся из range графа. Результат работы:
+
+<img src="./graphsPictures/withdrawBalance_sdg.png" width="100%">
